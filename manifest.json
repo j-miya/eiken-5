@@ -1,0 +1,41 @@
+{
+
+"name": "英検5級 英単語トレーニング",
+
+"short_name": "英検5級単語",
+
+"description": "英検5級の必須英単語をカード学習と4択クイズでマスターできるアプリ",
+
+"start_url": "./index.html",
+
+"display": "standalone",
+
+"background_color": "#f8fafc",
+
+"theme_color": "#f97316",
+
+"icons": [
+
+{
+
+"src": "icons/icon-192.png",
+
+"sizes": "192x192",
+
+"type": "image/png"
+
+},
+
+{
+
+"src": "icons/icon-512.png",
+
+"sizes": "512x512",
+
+"type": "image/png"
+
+}
+
+]
+
+}

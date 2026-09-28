@@ -1,0 +1,1299 @@
+<!doctype html>
+
+<html lang="ja">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>英検5級 英単語トレーニング</title>
+
+
+<!-- PWA Settings -->
+
+<link rel="manifest" href="manifest.json">
+
+<meta name="theme-color" content="#f97316">
+
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+
+
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&amp;family=Cardo:wght@400;700&amp;display=swap" rel="stylesheet">
+
+<style>
+
+body{font-family:'DM Sans',sans-serif}
+
+.flip-inner{transition:transform .5s;transform-style:preserve-3d}
+
+.is-flipped .flip-inner{transform:rotateY(180deg)}
+
+.card-face{backface-visibility:hidden}
+
+.flip-back{transform:rotateY(180deg)}
+
+.tab-active{border-bottom:3px solid #f97316;color:#f97316}
+
+.opt-btn{transition:all .2s}
+
+.opt-btn:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,.12)}
+
+.opt-correct{background:#22c55e!important;color:#fff!important;border-color:#22c55e!important}
+
+.opt-wrong{background:#ef4444!important;color:#fff!important;border-color:#ef4444!important}
+
+.fade-in{animation:fadeIn .3s ease}
+
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+@keyframes pop{0%{transform:scale(1)}50%{transform:scale(1.15)}100%{transform:scale(1)}}
+
+.pop{animation:pop .3s ease}
+
+select.cat-select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23f97316' viewBox='0 0 16 16'%3E%3Cpath d='M4 6l4 4 4-4'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right .75rem center;padding-right:2.5rem}
+
+.mic-listening{animation:pulse 1.2s infinite;background-color:#ef4444!important;color:#fff!important}
+
+@keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.08)}100%{transform:scale(1)}}
+
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/lucide@0.577.0/dist/umd/lucide.min.js" type="text/javascript"></script>
+
+<script src="https://cdn.tailwindcss.com/3.4.17" type="text/javascript"></script>
+
+</head>
+
+<body class="min-h-screen w-full bg-slate-50 text-slate-800">
+
+<header class="w-full px-4 pt-6 pb-2">
+
+<div class="max-w-lg mx-auto text-center">
+
+<h1 class="font-bold text-2xl text-orange-600">英検5級 英単語トレーニング</h1>
+
+<p class="text-sm text-gray-500 mt-1">楽しく学んで一発合格を目指そう！</p>
+
+</div>
+
+</header>
+
+<nav class="max-w-lg mx-auto flex border-b border-gray-200 mt-4" role="tablist">
+
+<button id="tab-learn" class="flex-1 py-3 text-center font-medium tab-active" role="tab" aria-selected="true" onclick="switchTab('learn')">カード学習</button>
+
+<button id="tab-quiz" class="flex-1 py-3 text-center font-medium text-gray-400" role="tab" aria-selected="false" onclick="switchTab('quiz')">4択クイズ</button>
+
+</nav>
+
+
+
+<!-- Category selector -->
+
+<div class="max-w-lg mx-auto px-4 mt-4">
+
+<select id="cat-select" class="cat-select w-full border-2 border-orange-200 rounded-xl px-4 py-3 text-base font-medium bg-white focus:outline-none focus:border-orange-400 shadow-sm" onchange="onCategoryChange()"></select>
+
+</div>
+
+
+
+<main class="max-w-lg mx-auto px-4 py-4">
+
+<!-- Learn Mode -->
+
+<section id="view-learn">
+
+<div class="flex justify-between items-center text-sm text-gray-400 mb-3 px-1">
+
+<span id="card-counter">1 / 1</span>
+
+<button type="button" onclick="toggleBookmarkCurrentCard()" class="flex items-center gap-1 text-amber-500 font-medium hover:opacity-80">
+
+<i id="card-bookmark-icon" data-lucide="star" style="width:20px;height:20px"></i>
+
+<span id="card-bookmark-label" class="text-xs">苦手に追加</span>
+
+</button>
+
+</div>
+
+
+
+<div id="flashcard-wrapper" class="w-full rounded-2xl cursor-pointer mx-auto relative" style="perspective:800px;height:220px" onclick="flipCard()">
+
+<div id="flashcard" class="flip-inner relative w-full h-full">
+
+<div class="card-face absolute inset-0 rounded-2xl flex flex-col items-center justify-center p-6 shadow-lg bg-white border border-gray-100">
+
+<span id="card-en" class="text-4xl font-bold text-gray-800" style="font-family:'Cardo',serif"></span>
+
+<span class="mt-3 text-xs opacity-50 text-gray-500">タップで日本語を表示</span>
+
+</div>
+
+<div class="card-face flip-back absolute inset-0 rounded-2xl flex flex-col items-center justify-center p-6 shadow-lg bg-orange-500 text-white">
+
+<span id="card-ja" class="text-3xl font-bold"></span>
+
+<span id="card-en-small" class="mt-2 text-lg opacity-80" style="font-family:'Cardo',serif"></span>
+
+</div>
+
+</div>
+
+</div>
+
+
+
+<!-- Pronunciation Feedback Banner -->
+
+<div id="speech-feedback" class="hidden mt-3 p-2.5 rounded-xl text-center text-sm font-semibold transition-all fade-in"></div>
+
+
+
+<div class="flex items-center justify-center gap-5 mt-5">
+
+<button type="button" onclick="prevCard()" class="w-12 h-12 rounded-full bg-white border border-gray-200 shadow flex items-center justify-center hover:bg-gray-50 active:scale-95 transition" aria-label="前の単語">
+
+<i data-lucide="chevron-left" style="width:22px;height:22px"></i>
+
+</button>
+
+<button type="button" id="speak-btn" onclick="speakWord()" class="w-14 h-14 rounded-full bg-orange-500 text-white shadow-lg flex items-center justify-center hover:bg-orange-600 active:scale-95 transition" aria-label="発音を聞く">
+
+<i data-lucide="volume-2" style="width:24px;height:24px"></i>
+
+</button>
+
+<button type="button" id="mic-btn" onclick="startSpeechRecognition()" class="w-14 h-14 rounded-full bg-slate-800 text-white shadow-lg flex items-center justify-center hover:bg-slate-700 active:scale-95 transition" aria-label="発音チェック">
+
+<i data-lucide="mic" style="width:24px;height:24px"></i>
+
+</button>
+
+<button type="button" onclick="nextCard()" class="w-12 h-12 rounded-full bg-white border border-gray-200 shadow flex items-center justify-center hover:bg-gray-50 active:scale-95 transition" aria-label="次の単語">
+
+<i data-lucide="chevron-right" style="width:22px;height:22px"></i>
+
+</button>
+
+</div>
+
+</section>
+
+
+
+<!-- Quiz Mode -->
+
+<section id="view-quiz" class="hidden">
+
+<div id="quiz-active">
+
+<div class="flex justify-between items-center mb-4">
+
+<span id="quiz-progress" class="text-sm text-gray-400">1 / 10</span>
+
+<span id="quiz-score" class="text-sm font-bold text-orange-500">0 点</span>
+
+</div>
+
+<div class="bg-white border border-gray-100 rounded-2xl p-8 shadow-lg text-center fade-in relative">
+
+<button type="button" id="quiz-bookmark-btn" onclick="toggleBookmarkQuizCard()" class="absolute top-4 right-4 text-amber-500 hover:opacity-80">
+
+<i id="quiz-bookmark-icon" data-lucide="star" style="width:22px;height:22px"></i>
+
+</button>
+
+<p class="text-xs uppercase tracking-wider opacity-40 mb-2">英語の意味は？</p>
+
+<p id="quiz-word" class="text-4xl font-bold" style="font-family:'Cardo',serif"></p>
+
+</div>
+
+<div id="quiz-options" class="grid grid-cols-2 gap-3 mt-5"></div>
+
+</div>
+
+
+
+<div id="quiz-result" class="hidden text-center fade-in">
+
+<div class="bg-white border border-gray-100 rounded-2xl p-8 shadow-lg">
+
+<p class="text-6xl mb-3">🎉</p>
+
+<h2 class="text-2xl font-bold text-gray-800">テスト結果</h2>
+
+<p id="result-score" class="text-5xl font-bold text-orange-500 my-4"></p>
+
+<p id="result-msg" class="text-gray-600 font-medium"></p>
+
+
+
+<!-- Stats Summary -->
+
+<div class="mt-6 pt-6 border-t border-gray-100 grid grid-cols-2 gap-4 text-center">
+
+<div class="bg-orange-50 p-3 rounded-xl">
+
+<p class="text-xs text-gray-500 font-medium">最高スコア</p>
+
+<p id="stat-high-score" class="text-xl font-bold text-orange-600">--</p>
+
+</div>
+
+<div class="bg-slate-50 p-3 rounded-xl">
+
+<p class="text-xs text-gray-500 font-medium">通算正解率</p>
+
+<p id="stat-accuracy" class="text-xl font-bold text-slate-700">--</p>
+
+</div>
+
+</div>
+
+</div>
+
+<button type="button" class="mt-6 w-full py-3.5 bg-orange-500 text-white rounded-full font-semibold shadow-lg hover:bg-orange-600 transition" onclick="startQuiz()">もう一度挑戦する</button>
+
+</div>
+
+</section>
+
+</main>
+
+
+
+<script>
+
+const CATEGORIES=[
+
+{name:"動作・日常生活",words:[
+
+{en:"eat",ja:"食べる"},{en:"drink",ja:"飲む"},{en:"sleep",ja:"寝る"},{en:"wake up",ja:"起きる"},
+
+{en:"wash",ja:"洗う"},{en:"brush",ja:"磨く"},{en:"read",ja:"読む"},{en:"write",ja:"書く"},
+
+{en:"listen",ja:"聞く"},{en:"speak",ja:"話す"},{en:"walk",ja:"歩く"},{en:"run",ja:"走る"},
+
+{en:"sit",ja:"座る"},{en:"stand",ja:"立つ"},{en:"open",ja:"開ける"},{en:"close",ja:"閉める"},
+
+{en:"go",ja:"行く"},{en:"come",ja:"来る"},{en:"give",ja:"与える"},{en:"take",ja:"取る"},
+
+{en:"buy",ja:"買う"},{en:"sell",ja:"売る"},{en:"play",ja:"遊ぶ、演奏する"},{en:"work",ja:"働く"},
+
+{en:"study",ja:"勉強する"},{en:"cook",ja:"料理する"},{en:"clean",ja:"掃除する"},{en:"help",ja:"手伝う"},
+
+{en:"teach",ja:"教える"},{en:"learn",ja:"学ぶ"},{en:"ask",ja:"尋ねる"},{en:"answer",ja:"答える"},
+
+{en:"watch",ja:"見る"},{en:"see",ja:"見る"},{en:"hear",ja:"聞く"},{en:"feel",ja:"感じる"},
+
+{en:"think",ja:"考える"},{en:"know",ja:"知っている"},{en:"want",ja:"欲しい"},{en:"like",ja:"好きである"},
+
+{en:"love",ja:"愛する"},{en:"need",ja:"必要とする"},{en:"use",ja:"使う"},{en:"make",ja:"作る"},
+
+{en:"get",ja:"得る"},{en:"put",ja:"置く"},{en:"take out",ja:"取り出す"},{en:"put on",ja:"着る"},{en:"take off",ja:"脱ぐ"}
+
+]},
+
+{name:"時間",words:[
+
+{en:"time",ja:"時間"},{en:"minute",ja:"分"},{en:"hour",ja:"時間（60分）"},{en:"second",ja:"秒"},
+
+{en:"day",ja:"日"},{en:"week",ja:"週"},{en:"month",ja:"月"},{en:"year",ja:"年"},
+
+{en:"morning",ja:"朝"},{en:"noon",ja:"正午"},{en:"afternoon",ja:"午後"},{en:"evening",ja:"夕方"},
+
+{en:"night",ja:"夜"},{en:"midnight",ja:"真夜中"},{en:"today",ja:"今日"},{en:"tomorrow",ja:"明日"},
+
+{en:"yesterday",ja:"昨日"},{en:"now",ja:"今"},{en:"late",ja:"遅く"},{en:"early",ja:"早く"},
+
+{en:"soon",ja:"すぐに"},{en:"always",ja:"いつも"},{en:"often",ja:"しばしば"},{en:"sometimes",ja:"時々"},
+
+{en:"never",ja:"決して～ない"},{en:"usually",ja:"通常"},{en:"seldom",ja:"めったに～ない"},{en:"ever",ja:"これまでに"}
+
+]},
+
+{name:"場所",words:[
+
+{en:"place",ja:"場所"},{en:"room",ja:"部屋"},{en:"house",ja:"家"},{en:"home",ja:"家、我が家"},
+
+{en:"school",ja:"学校"},{en:"classroom",ja:"教室"},{en:"library",ja:"図書館"},{en:"park",ja:"公園"},
+
+{en:"store",ja:"店"},{en:"shop",ja:"店"},{en:"restaurant",ja:"レストラン"},{en:"hospital",ja:"病院"},
+
+{en:"station",ja:"駅"},{en:"airport",ja:"空港"},{en:"city",ja:"都市"},{en:"town",ja:"町"},
+
+{en:"country",ja:"国"},{en:"world",ja:"世界"},{en:"inside",ja:"中に"},{en:"outside",ja:"外に"},
+
+{en:"near",ja:"近くに"},{en:"far",ja:"遠くに"},{en:"here",ja:"ここに"},{en:"there",ja:"そこに"},
+
+{en:"everywhere",ja:"どこにでも"},{en:"somewhere",ja:"どこかに"},{en:"nowhere",ja:"どこにも～ない"}
+
+]},
+
+{name:"天気",words:[
+
+{en:"weather",ja:"天気"},{en:"sunny",ja:"晴れ"},{en:"cloudy",ja:"曇り"},{en:"rainy",ja:"雨"},
+
+{en:"snowy",ja:"雪"},{en:"windy",ja:"風が強い"},{en:"hot",ja:"暑い"},{en:"cold",ja:"寒い"},
+
+{en:"warm",ja:"暖かい"},{en:"cool",ja:"涼しい"},{en:"temperature",ja:"気温"},{en:"sky",ja:"空"},
+
+{en:"rain",ja:"雨"},{en:"snow",ja:"雪"},{en:"wind",ja:"風"},{en:"thunder",ja:"雷"},
+
+{en:"lightning",ja:"稲妻"},{en:"storm",ja:"嵐"}
+
+]},
+
+{name:"スポーツ",words:[
+
+{en:"sport",ja:"スポーツ"},{en:"ball",ja:"ボール"},{en:"bat",ja:"バット"},{en:"racket",ja:"ラケット"},
+
+{en:"goal",ja:"ゴール"},{en:"game",ja:"試合、ゲーム"},{en:"team",ja:"チーム"},{en:"player",ja:"選手"},
+
+{en:"win",ja:"勝つ"},{en:"lose",ja:"負ける"},{en:"play",ja:"（スポーツを）する"},{en:"swim",ja:"泳ぐ"},
+
+{en:"jump",ja:"跳ぶ"},{en:"kick",ja:"蹴る"},{en:"throw",ja:"投げる"},{en:"catch",ja:"捕まえる"},
+
+{en:"run",ja:"走る"},{en:"walk",ja:"歩く"},{en:"ski",ja:"スキーをする"},{en:"skate",ja:"スケートをする"},
+
+{en:"soccer",ja:"サッカー"},{en:"baseball",ja:"野球"},{en:"basketball",ja:"バスケットボール"},
+
+{en:"tennis",ja:"テニス"},{en:"swimming",ja:"水泳"},{en:"running",ja:"ランニング"},{en:"skiing",ja:"スキー"}
+
+]},
+
+{name:"家",words:[
+
+{en:"house",ja:"家"},{en:"home",ja:"家、我が家"},{en:"room",ja:"部屋"},{en:"bedroom",ja:"寝室"},
+
+{en:"living room",ja:"居間"},{en:"kitchen",ja:"台所"},{en:"bathroom",ja:"浴室、洗面所"},{en:"toilet",ja:"トイレ"},
+
+{en:"hall",ja:"廊下"},{en:"stairs",ja:"階段"},{en:"door",ja:"ドア"},{en:"window",ja:"窓"},
+
+{en:"wall",ja:"壁"},{en:"floor",ja:"床"},{en:"ceiling",ja:"天井"},{en:"roof",ja:"屋根"},
+
+{en:"garden",ja:"庭"},{en:"gate",ja:"門"},{en:"chair",ja:"椅子"},{en:"table",ja:"テーブル"},
+
+{en:"bed",ja:"ベッド"},{en:"sofa",ja:"ソファ"},{en:"desk",ja:"机"},{en:"shelf",ja:"棚"},
+
+{en:"lamp",ja:"ランプ"},{en:"light",ja:"明かり"},{en:"refrigerator",ja:"冷蔵庫"},{en:"oven",ja:"オーブン"},
+
+{en:"stove",ja:"コンロ"},{en:"sink",ja:"流し台"},{en:"cupboard",ja:"戸棚"},{en:"picture",ja:"絵"},
+
+{en:"clock",ja:"時計"},{en:"mirror",ja:"鏡"}
+
+]},
+
+{name:"疑問詞・疑問表現",words:[
+
+{en:"who",ja:"誰"},{en:"what",ja:"何"},{en:"where",ja:"どこ"},{en:"when",ja:"いつ"},
+
+{en:"why",ja:"なぜ"},{en:"how",ja:"どのように"},{en:"which",ja:"どれ"},{en:"whose",ja:"誰の"},
+
+{en:"how many",ja:"いくつの"},{en:"how much",ja:"いくら"},{en:"how long",ja:"どのくらい（時間）"},
+
+{en:"how often",ja:"どのくらいの頻度で"},{en:"what kind",ja:"どんな種類の"},{en:"question",ja:"質問"},
+
+{en:"answer",ja:"答え"},{en:"why not",ja:"なぜ～ないのですか"},{en:"what about",ja:"～はどうですか"}
+
+]},
+
+{name:"代名詞・指示語",words:[
+
+{en:"I",ja:"私は"},{en:"you",ja:"あなたは"},{en:"he",ja:"彼は"},{en:"she",ja:"彼女は"},
+
+{en:"it",ja:"それは"},{en:"we",ja:"私たちは"},{en:"they",ja:"彼らは"},{en:"me",ja:"私を（に）"},
+
+{en:"him",ja:"彼を（に）"},{en:"her",ja:"彼女を（に）"},{en:"us",ja:"私たちを（に）"},{en:"them",ja:"彼らを（に）"},
+
+{en:"my",ja:"私の"},{en:"your",ja:"あなたの"},{en:"his",ja:"彼の"},{en:"her",ja:"彼女の"},
+
+{en:"its",ja:"それの"},{en:"our",ja:"私たちの"},{en:"their",ja:"彼らの"},{en:"this",ja:"これ（この）"},
+
+{en:"that",ja:"あれ（あの）"},{en:"these",ja:"これら（これらの）"},{en:"those",ja:"あれら（あれらの）"},
+
+{en:"who",ja:"誰"},{en:"what",ja:"何"},{en:"where",ja:"どこ"},{en:"when",ja:"いつ"},
+
+{en:"why",ja:"なぜ"},{en:"how",ja:"どのように"},{en:"which",ja:"どれ"}
+
+]},
+
+{name:"曜日",words:[
+
+{en:"Sunday",ja:"日曜日"},{en:"Monday",ja:"月曜日"},{en:"Tuesday",ja:"火曜日"},{en:"Wednesday",ja:"水曜日"},
+
+{en:"Thursday",ja:"木曜日"},{en:"Friday",ja:"金曜日"},{en:"Saturday",ja:"土曜日"},{en:"day",ja:"日"},
+
+{en:"weekday",ja:"平日"},{en:"weekend",ja:"週末"}
+
+]},
+
+{name:"数字・序数",words:[
+
+{en:"zero",ja:"0"},{en:"one",ja:"1"},{en:"two",ja:"2"},{en:"three",ja:"3"},{en:"four",ja:"4"},
+
+{en:"five",ja:"5"},{en:"six",ja:"6"},{en:"seven",ja:"7"},{en:"eight",ja:"8"},{en:"nine",ja:"9"},
+
+{en:"ten",ja:"10"},{en:"eleven",ja:"11"},{en:"twelve",ja:"12"},{en:"thirteen",ja:"13"},
+
+{en:"fourteen",ja:"14"},{en:"fifteen",ja:"15"},{en:"sixteen",ja:"16"},{en:"seventeen",ja:"17"},
+
+{en:"eighteen",ja:"18"},{en:"nineteen",ja:"19"},{en:"twenty",ja:"20"},{en:"thirty",ja:"30"},
+
+{en:"forty",ja:"40"},{en:"fifty",ja:"50"},{en:"sixty",ja:"60"},{en:"seventy",ja:"70"},
+
+{en:"eighty",ja:"80"},{en:"ninety",ja:"90"},{en:"hundred",ja:"100"},{en:"thousand",ja:"1000"},
+
+{en:"million",ja:"1,000,000"},{en:"first",ja:"1番目"},{en:"second",ja:"2番目"},{en:"third",ja:"3番目"},
+
+{en:"fourth",ja:"4番目"},{en:"fifth",ja:"5番目"},{en:"sixth",ja:"6番目"},{en:"seventh",ja:"7番目"},
+
+{en:"eighth",ja:"8番目"},{en:"ninth",ja:"9番目"},{en:"tenth",ja:"10番目"}
+
+]},
+
+{name:"月",words:[
+
+{en:"January",ja:"1月"},{en:"February",ja:"2月"},{en:"March",ja:"3月"},{en:"April",ja:"4月"},
+
+{en:"May",ja:"5月"},{en:"June",ja:"6月"},{en:"July",ja:"7月"},{en:"August",ja:"8月"},
+
+{en:"September",ja:"9月"},{en:"October",ja:"10月"},{en:"November",ja:"11月"},{en:"December",ja:"12月"},
+
+{en:"month",ja:"月"}
+
+]},
+
+{name:"季節",words:[
+
+{en:"season",ja:"季節"},{en:"spring",ja:"春"},{en:"summer",ja:"夏"},{en:"autumn",ja:"秋"},
+
+{en:"fall",ja:"秋"},{en:"winter",ja:"冬"}
+
+]},
+
+{name:"色",words:[
+
+{en:"color",ja:"色"},{en:"red",ja:"赤"},{en:"blue",ja:"青"},{en:"green",ja:"緑"},
+
+{en:"yellow",ja:"黄"},{en:"orange",ja:"オレンジ"},{en:"purple",ja:"紫"},{en:"pink",ja:"ピンク"},
+
+{en:"brown",ja:"茶色"},{en:"black",ja:"黒"},{en:"white",ja:"白"},{en:"gray",ja:"灰色"},
+
+{en:"gold",ja:"金色"},{en:"silver",ja:"銀色"}
+
+]},
+
+{name:"動物",words:[
+
+{en:"animal",ja:"動物"},{en:"dog",ja:"犬"},{en:"cat",ja:"猫"},{en:"bird",ja:"鳥"},
+
+{en:"fish",ja:"魚"},{en:"cow",ja:"牛"},{en:"pig",ja:"豚"},{en:"horse",ja:"馬"},
+
+{en:"sheep",ja:"羊"},{en:"chicken",ja:"鶏"},{en:"duck",ja:"アヒル"},{en:"lion",ja:"ライオン"},
+
+{en:"tiger",ja:"トラ"},{en:"elephant",ja:"象"},{en:"monkey",ja:"猿"},{en:"bear",ja:"熊"},
+
+{en:"rabbit",ja:"ウサギ"},{en:"frog",ja:"カエル"},{en:"snake",ja:"ヘビ"},{en:"insect",ja:"昆虫"},
+
+{en:"bee",ja:"蜂"},{en:"ant",ja:"アリ"},{en:"butterfly",ja:"蝶"}
+
+]},
+
+{name:"学校",words:[
+
+{en:"school",ja:"学校"},{en:"student",ja:"生徒、学生"},{en:"teacher",ja:"先生"},{en:"class",ja:"授業、クラス"},
+
+{en:"classroom",ja:"教室"},{en:"desk",ja:"机"},{en:"chair",ja:"椅子"},{en:"blackboard",ja:"黒板"},
+
+{en:"chalk",ja:"チョーク"},{en:"eraser",ja:"消しゴム"},{en:"pen",ja:"ペン"},{en:"pencil",ja:"鉛筆"},
+
+{en:"notebook",ja:"ノート"},{en:"book",ja:"本"},{en:"dictionary",ja:"辞書"},{en:"library",ja:"図書館"},
+
+{en:"exam",ja:"試験"},{en:"test",ja:"テスト、試験"},{en:"homework",ja:"宿題"},{en:"subject",ja:"教科"},
+
+{en:"math",ja:"数学"},{en:"science",ja:"理科"},{en:"history",ja:"歴史"},{en:"english",ja:"英語"}
+
+]},
+
+{name:"国・国名",words:[
+
+{en:"country",ja:"国"},{en:"Japan",ja:"日本"},{en:"China",ja:"中国"},{en:"Korea",ja:"韓国"},
+
+{en:"America",ja:"アメリカ"},{en:"USA",ja:"アメリカ合衆国"},{en:"Canada",ja:"カナダ"},
+
+{en:"England",ja:"イギリス"},{en:"United Kingdom",ja:"イギリス"},{en:"France",ja:"フランス"},
+
+{en:"Germany",ja:"ドイツ"},{en:"Italy",ja:"イタリア"},{en:"Spain",ja:"スペイン"},
+
+{en:"Australia",ja:"オーストラリア"},{en:"Brazil",ja:"ブラジル"},{en:"India",ja:"インド"},
+
+{en:"Mexico",ja:"メキシコ"},{en:"Russia",ja:"ロシア"},{en:"Egypt",ja:"エジプト"}
+
+]},
+
+{name:"家族・人",words:[
+
+{en:"person",ja:"人"},{en:"family",ja:"家族"},{en:"father",ja:"父"},{en:"mother",ja:"母"},
+
+{en:"parent",ja:"親"},{en:"son",ja:"息子"},{en:"daughter",ja:"娘"},{en:"child",ja:"子供"},
+
+{en:"brother",ja:"兄弟（兄・弟）"},{en:"sister",ja:"姉妹（姉・妹）"},{en:"sibling",ja:"兄弟姉妹"},
+
+{en:"grandfather",ja:"祖父"},{en:"grandmother",ja:"祖母"},{en:"grandparent",ja:"祖父母"},
+
+{en:"uncle",ja:"おじ"},{en:"aunt",ja:"おば"},{en:"nephew",ja:"甥"},{en:"niece",ja:"姪"},{en:"cousin",ja:"いとこ"},{en:"friend",ja:"友達"},{en:"boy",ja:"少年"},{en:"girl",ja:"少女"},
+
+{en:"man",ja:"男性"},{en:"woman",ja:"女性"},{en:"baby",ja:"赤ちゃん"},{en:"people",ja:"人々"}
+
+]},
+
+{name:"楽器",words:[
+
+{en:"musical instrument",ja:"楽器"},{en:"piano",ja:"ピアノ"},{en:"guitar",ja:"ギター"},
+
+{en:"violin",ja:"バイオリン"},{en:"flute",ja:"フルート"},{en:"trumpet",ja:"トランペット"},
+
+{en:"drum",ja:"ドラム"},{en:"saxophone",ja:"サックス"},{en:"cello",ja:"チェロ"},
+
+{en:"clarinet",ja:"クラリネット"},{en:"music",ja:"音楽"},{en:"song",ja:"歌"},{en:"play",ja:"（楽器を）演奏する"}
+
+]},
+
+{name:"果物",words:[
+
+{en:"fruit",ja:"果物"},{en:"apple",ja:"リンゴ"},{en:"banana",ja:"バナナ"},{en:"orange",ja:"オレンジ"},
+
+{en:"grape",ja:"ブドウ"},{en:"strawberry",ja:"イチゴ"},{en:"peach",ja:"桃"},{en:"pear",ja:"梨"},
+
+{en:"cherry",ja:"サクランボ"},{en:"lemon",ja:"レモン"},{en:"watermelon",ja:"スイカ"},{en:"melon",ja:"メロン"}
+
+]},
+
+{name:"野菜",words:[
+
+{en:"vegetable",ja:"野菜"},{en:"potato",ja:"ジャガイモ"},{en:"tomato",ja:"トマト"},{en:"carrot",ja:"ニンジン"},
+
+{en:"onion",ja:"タマネギ"},{en:"cabbage",ja:"キャベツ"},{en:"lettuce",ja:"レタス"},{en:"cucumber",ja:"キュウリ"},
+
+{en:"eggplant",ja:"ナス"},{en:"pepper",ja:"ピーマン、唐辛子"},{en:"corn",ja:"トウモロコシ"},
+
+{en:"broccoli",ja:"ブロッコリー"},{en:"pumpkin",ja:"カボチャ"},{en:"spinach",ja:"ほうれん草"}
+
+]},
+
+{name:"形容詞・副詞・前置詞など",words:[
+
+{en:"big",ja:"大きい"},{en:"small",ja:"小さい"},{en:"long",ja:"長い"},{en:"short",ja:"短い"},
+
+{en:"tall",ja:"背の高い"},{en:"high",ja:"高い"},{en:"low",ja:"低い"},{en:"heavy",ja:"重い"},
+
+{en:"light",ja:"軽い"},{en:"hot",ja:"暑い、熱い"},{en:"cold",ja:"寒い、冷たい"},{en:"warm",ja:"暖かい"},
+
+{en:"cool",ja:"涼しい"},{en:"new",ja:"新しい"},{en:"old",ja:"古い、年老いた"},{en:"good",ja:"良い"},
+
+{en:"bad",ja:"悪い"},{en:"easy",ja:"簡単な"},{en:"difficult",ja:"難しい"},{en:"happy",ja:"幸せな"},
+
+{en:"sad",ja:"悲しい"},{en:"beautiful",ja:"美しい"},{en:"pretty",ja:"きれいな"},{en:"handsome",ja:"ハンサムな"},
+
+{en:"interesting",ja:"面白い"},{en:"boring",ja:"退屈な"},{en:"delicious",ja:"おいしい"},{en:"quiet",ja:"静かな"},
+
+{en:"noisy",ja:"うるさい"},{en:"kind",ja:"親切な"},{en:"smart",ja:"賢い"},{en:"fast",ja:"速い"},
+
+{en:"slow",ja:"遅い"},{en:"strong",ja:"強い"},{en:"weak",ja:"弱い"},{en:"healthy",ja:"健康な"},{en:"sick",ja:"病気の"},{en:"rich",ja:"裕福な"},{en:"poor",ja:"貧しい"},{en:"clean",ja:"清潔な"},
+
+{en:"dirty",ja:"汚い"},{en:"important",ja:"重要な"},{en:"necessary",ja:"必要な"},{en:"possible",ja:"可能な"},
+
+{en:"impossible",ja:"不可能な"},{en:"true",ja:"本当の"},{en:"false",ja:"偽りの"},{en:"right",ja:"正しい、右の"},
+
+{en:"wrong",ja:"間違った"},{en:"many",ja:"たくさんの（可算）"},{en:"much",ja:"たくさんの（不可算）"},
+
+{en:"few",ja:"少ない（可算）"},{en:"little",ja:"少ない（不可算）"},{en:"all",ja:"すべての"},
+
+{en:"some",ja:"いくつかの、いくらかの"},{en:"any",ja:"どんな～でも、いくらかの"},{en:"no",ja:"何の～ない"},
+
+{en:"about",ja:"～について"},{en:"above",ja:"～の上に"},{en:"across",ja:"～を横切って"},
+
+{en:"after",ja:"～の後で"},{en:"against",ja:"～に反対して、～にぶつかって"},{en:"among",ja:"～の中に（3つ以上）"},
+
+{en:"around",ja:"～の周りに"},{en:"at",ja:"～に（時・場所）"},{en:"before",ja:"～の前に"},
+
+{en:"behind",ja:"～の後ろに"},{en:"below",ja:"～の下に"},{en:"beneath",ja:"～の真下に"},
+
+{en:"beside",ja:"～の隣に"},{en:"between",ja:"～の間に（2つ）"},{en:"beyond",ja:"～を越えて"},
+
+{en:"by",ja:"～によって、～のそばに"},{en:"down",ja:"～へ下に"},{en:"during",ja:"～の間に（期間）"},
+
+{en:"for",ja:"～のために"},{en:"from",ja:"～から"},{en:"in",ja:"～の中に"},{en:"inside",ja:"～の中に"},
+
+{en:"into",ja:"～の中へ"},{en:"like",ja:"～のような"},{en:"near",ja:"～の近くに"},{en:"of",ja:"～の"},{en:"off",ja:"～から離れて"},{en:"on",ja:"～の上に"},{en:"onto",ja:"～の上へ"},{en:"out",ja:"～の外へ"},{en:"outside",ja:"～の外に"},{en:"over",ja:"～の上に、～を越えて"},{en:"past",ja:"～を過ぎて"},
+
+{en:"since",ja:"～以来"},{en:"through",ja:"～を通って"},{en:"throughout",ja:"～の至る所に"},{en:"to",ja:"～へ"},{en:"toward",ja:"～の方へ"},{en:"under",ja:"～の下に"},{en:"underneath",ja:"～の真下に"},{en:"until",ja:"～まで"},{en:"up",ja:"～へ上に"},{en:"upon",ja:"～の上に"},{en:"with",ja:"～と一緒に"},{en:"within",ja:"～の範囲内で"},{en:"without",ja:"～なしで"}
+
+]},
+
+{name:"よく使う表現",words:[
+
+{en:"Good morning.",ja:"おはようございます。"},{en:"Good afternoon.",ja:"こんにちは。"},
+
+{en:"Good evening.",ja:"こんばんは。"},{en:"Good night.",ja:"おやすみなさい。"},
+
+{en:"Goodbye.",ja:"さようなら。"},{en:"Hello.",ja:"こんにちは。"},{en:"Hi.",ja:"やあ。"},
+
+{en:"Thank you.",ja:"ありがとう。"},{en:"You're welcome.",ja:"どういたしまして。"},
+
+{en:"Excuse me.",ja:"すみません。"},{en:"I'm sorry.",ja:"ごめんなさい。"},{en:"Please.",ja:"お願いします。"},
+
+{en:"Yes.",ja:"はい。"},{en:"No.",ja:"いいえ。"},{en:"How are you?",ja:"お元気ですか？"},
+
+{en:"I'm fine, thank you.",ja:"元気です、ありがとう。"},{en:"What's your name?",ja:"お名前は何ですか？"},
+
+{en:"My name is ～.",ja:"私の名前は～です。"},{en:"Nice to meet you.",ja:"はじめまして。"},
+
+{en:"See you later.",ja:"また後で会いましょう。"},{en:"Have a nice day.",ja:"良い一日を。"},
+
+{en:"Can you help me?",ja:"手伝ってもらえますか？"},{en:"I don't understand.",ja:"わかりません。"},
+
+{en:"Could you repeat that?",ja:"もう一度言ってもらえますか？"},{en:"What time is it?",ja:"今何時ですか？"},
+
+{en:"How much is this?",ja:"これはいくらですか？"},{en:"Where is the ～?",ja:"～はどこですか？"},
+
+{en:"I like ～.",ja:"私は～が好きです。"},{en:"I don't like ～.",ja:"私は～が好きではありません。"},
+
+{en:"What do you like?",ja:"あなたは何が好きですか？"},{en:"Let's ～.",ja:"～しましょう。"},
+
+{en:"What is this?",ja:"これは何ですか？"},{en:"What happened?",ja:"どうしましたか？"},
+
+{en:"It's okay.",ja:"大丈夫です。"},{en:"Don't worry.",ja:"心配しないでください。"},
+
+{en:"Of course.",ja:"もちろん。"},{en:"Maybe.",ja:"たぶん。"},{en:"I see.",ja:"なるほど。"},
+
+{en:"Really?",ja:"本当ですか？"},{en:"Welcome!",ja:"ようこそ！"},{en:"Congratulations!",ja:"おめでとう！"},
+
+{en:"Good luck!",ja:"幸運を祈ります！"}
+
+]}
+
+];
+
+
+
+// Flatten all words
+
+const ALL_WORDS=CATEGORIES.flatMap(c=>c.words);
+
+
+
+// LocalStorage Keys
+
+const STORAGE_BOOKMARKS = 'eiken5_bookmarks';
+
+const STORAGE_STATS = 'eiken5_stats';
+
+
+
+let bookmarks = JSON.parse(localStorage.getItem(STORAGE_BOOKMARKS) || '[]');
+
+let stats = JSON.parse(localStorage.getItem(STORAGE_STATS) || '{"totalQuestions":0,"totalCorrect":0,"highScore":0}');
+
+
+
+let currentWords=ALL_WORDS;
+
+let cardIdx=0,flipped=false;
+
+let quizWords,quizIdx,score,answered;
+
+let currentTab='learn';
+
+let isListening = false;
+
+
+
+// Build category dropdown
+
+function renderCategories(){
+
+const sel=document.getElementById('cat-select');
+
+const currentVal = sel.value || 'all';
+
+sel.innerHTML = '';
+
+
+
+// Bookmarks Category
+
+const bookmarkedWords = ALL_WORDS.filter(w => bookmarks.includes(w.en));
+
+const optBookmark = document.createElement('option');
+
+optBookmark.value = 'bookmark';
+
+optBookmark.textContent = `★ 苦手な単語（${bookmarkedWords.length}語）`;
+
+sel.appendChild(optBookmark);
+
+
+
+// All Category
+
+const optAll=document.createElement('option');
+
+optAll.value='all';
+
+optAll.textContent=`すべて（${ALL_WORDS.length}語）`;
+
+sel.appendChild(optAll);
+
+
+
+// Individual Categories
+
+CATEGORIES.forEach((c,i)=>{
+
+const o=document.createElement('option');
+
+o.value=i;
+
+o.textContent=`${c.name}（${c.words.length}語）`;
+
+sel.appendChild(o);
+
+});
+
+
+
+sel.value = currentVal;
+
+}
+
+
+
+function onCategoryChange(){
+
+const v=document.getElementById('cat-select').value;
+
+if(v === 'bookmark') {
+
+currentWords = ALL_WORDS.filter(w => bookmarks.includes(w.en));
+
+} else if(v === 'all') {
+
+currentWords = ALL_WORDS;
+
+} else {
+
+currentWords = CATEGORIES[+v].words;
+
+}
+
+cardIdx=0;
+
+showCard();
+
+if(currentTab==='quiz') startQuiz();
+
+}
+
+
+
+function switchTab(t){
+
+currentTab=t;
+
+document.getElementById('view-learn').classList.toggle('hidden',t!=='learn');
+
+document.getElementById('view-quiz').classList.toggle('hidden',t!=='quiz');
+
+document.getElementById('tab-learn').classList.toggle('tab-active',t==='learn');
+
+document.getElementById('tab-learn').classList.toggle('text-gray-400',t!=='learn');
+
+document.getElementById('tab-learn').setAttribute('aria-selected',t==='learn');
+
+document.getElementById('tab-quiz').classList.toggle('tab-active',t==='quiz');
+
+document.getElementById('tab-quiz').classList.toggle('text-gray-400',t!=='quiz');
+
+document.getElementById('tab-quiz').setAttribute('aria-selected',t==='quiz');
+
+if(t==='quiz'&&!quizWords) startQuiz();
+
+}
+
+
+
+function updateBookmarkUI(){
+
+if(!currentWords.length) return;
+
+const w = currentWords[cardIdx];
+
+const isBookmarked = bookmarks.includes(w?.en);
+
+
+const icon = document.getElementById('card-bookmark-icon');
+
+const label = document.getElementById('card-bookmark-label');
+
+
+if(isBookmarked){
+
+icon.setAttribute('fill', '#f59e0b');
+
+label.textContent = '苦手解除';
+
+} else {
+
+icon.setAttribute('fill', 'none');
+
+label.textContent = '苦手に追加';
+
+}
+
+}
+
+
+
+function toggleBookmarkCurrentCard(){
+
+if(!currentWords.length) return;
+
+const w = currentWords[cardIdx];
+
+toggleBookmark(w.en);
+
+updateBookmarkUI();
+
+renderCategories();
+
+}
+
+
+
+function toggleBookmark(wordEn){
+
+if(bookmarks.includes(wordEn)){
+
+bookmarks = bookmarks.filter(b => b !== wordEn);
+
+} else {
+
+bookmarks.push(wordEn);
+
+}
+
+localStorage.setItem(STORAGE_BOOKMARKS, JSON.stringify(bookmarks));
+
+}
+
+
+
+function showCard(){
+
+const feedback = document.getElementById('speech-feedback');
+
+feedback.classList.add('hidden');
+
+
+
+if(!currentWords.length){
+
+document.getElementById('card-en').textContent = "登録なし";
+
+document.getElementById('card-ja').textContent = "苦手な単語はありません";
+
+document.getElementById('card-en-small').textContent = "";
+
+document.getElementById('card-counter').textContent = "0 / 0";
+
+return;
+
+}
+
+const w=currentWords[cardIdx];
+
+document.getElementById('card-en').textContent=w.en;
+
+document.getElementById('card-ja').textContent=w.ja;
+
+document.getElementById('card-en-small').textContent=w.en;
+
+document.getElementById('card-counter').textContent=`${cardIdx+1} / ${currentWords.length}`;
+
+if(flipped){flipped=false;document.getElementById('flashcard').classList.remove('is-flipped');}
+
+updateBookmarkUI();
+
+}
+
+
+
+function flipCard(){if(currentWords.length){flipped=!flipped;document.getElementById('flashcard').classList.toggle('is-flipped');}}
+
+function nextCard(){if(currentWords.length){cardIdx=(cardIdx+1)%currentWords.length;showCard();}}
+
+function prevCard(){if(currentWords.length){cardIdx=(cardIdx-1+currentWords.length)%currentWords.length;showCard();}}
+
+
+
+function speakWord(){
+
+if(!currentWords.length) return;
+
+const u=new SpeechSynthesisUtterance(currentWords[cardIdx].en);
+
+u.lang='en-US';u.rate=0.85;
+
+speechSynthesis.cancel();speechSynthesis.speak(u);
+
+document.getElementById('speak-btn').classList.add('pop');
+
+setTimeout(()=>document.getElementById('speak-btn').classList.remove('pop'),300);
+
+}
+
+
+
+// Voice Recognition Feature
+
+function startSpeechRecognition(){
+
+if(!currentWords.length) return;
+
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+const feedback = document.getElementById('speech-feedback');
+
+const micBtn = document.getElementById('mic-btn');
+
+
+
+if(!SpeechRecognition){
+
+feedback.className = "mt-3 p-2.5 rounded-xl text-center text-sm font-semibold bg-gray-200 text-gray-700 fade-in";
+
+feedback.textContent = "お使いのブラウザは音声認識に対応していません。";
+
+feedback.classList.remove('hidden');
+
+return;
+
+}
+
+
+
+const recognition = new SpeechRecognition();
+
+recognition.lang = 'en-US';
+
+recognition.interimResults = false;
+
+recognition.maxAlternatives = 3;
+
+
+
+recognition.onstart = () => {
+
+isListening = true;
+
+micBtn.classList.add('mic-listening');
+
+feedback.className = "mt-3 p-2.5 rounded-xl text-center text-sm font-semibold bg-amber-100 text-amber-800 fade-in";
+
+feedback.textContent = "👂 発音を聞いています...";
+
+feedback.classList.remove('hidden');
+
+};
+
+
+
+recognition.onresult = (e) => {
+
+const targetWord = currentWords[cardIdx].en.toLowerCase().replace(/[^a-z0-9 ]/g, '');
+
+const results = Array.from(e.results[0]).map(r => r.transcript.toLowerCase().replace(/[^a-z0-9 ]/g, ''));
+
+
+const isCorrect = results.some(res => res === targetWord || res.includes(targetWord) || targetWord.includes(res));
+
+
+
+if(isCorrect){
+
+feedback.className = "mt-3 p-2.5 rounded-xl text-center text-sm font-semibold bg-green-100 text-green-800 border border-green-300 fade-in";
+
+feedback.textContent = `⭕ 素晴らしい！「${results[0]}」と認識されました`;
+
+} else {
+
+feedback.className = "mt-3 p-2.5 rounded-xl text-center text-sm font-semibold bg-red-100 text-red-800 border border-red-300 fade-in";
+
+feedback.textContent = `❌ 惜しい！聞き取り：「${results[0]}」`;
+
+}
+
+};
+
+
+
+recognition.onerror = () => {
+
+feedback.className = "mt-3 p-2.5 rounded-xl text-center text-sm font-semibold bg-gray-200 text-gray-700 fade-in";
+
+feedback.textContent = "音声が上手く聞き取れませんでした。もう一度試してください。";
+
+};
+
+
+
+recognition.onend = () => {
+
+isListening = false;
+
+micBtn.classList.remove('mic-listening');
+
+};
+
+
+
+recognition.start();
+
+}
+
+
+
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.random()*i+1|0;[a[i],a[j]]=[a[j],a[i]];}return a;}
+
+
+
+function startQuiz(){
+
+const pool=currentWords.length>=4?currentWords:ALL_WORDS;
+
+const cnt=Math.min(10,pool.length);
+
+quizWords=shuffle([...pool]).slice(0,cnt);quizIdx=0;score=0;answered=false;
+
+document.getElementById('quiz-result').classList.add('hidden');
+
+document.getElementById('quiz-active').classList.remove('hidden');
+
+showQuestion();
+
+}
+
+
+
+function updateQuizBookmarkUI(){
+
+const w = quizWords[quizIdx];
+
+const isBookmarked = bookmarks.includes(w.en);
+
+const icon = document.getElementById('quiz-bookmark-icon');
+
+if(isBookmarked){
+
+icon.setAttribute('fill', '#f59e0b');
+
+} else {
+
+icon.setAttribute('fill', 'none');
+
+}
+
+}
+
+
+
+function toggleBookmarkQuizCard(){
+
+const w = quizWords[quizIdx];
+
+toggleBookmark(w.en);
+
+updateQuizBookmarkUI();
+
+renderCategories();
+
+}
+
+
+
+function showQuestion(){
+
+const w=quizWords[quizIdx];
+
+const total=quizWords.length;
+
+document.getElementById('quiz-word').textContent=w.en;
+
+document.getElementById('quiz-progress').textContent=`${quizIdx+1} / ${total}`;
+
+document.getElementById('quiz-score').textContent=`${score} 点`;
+
+answered=false;
+
+updateQuizBookmarkUI();
+
+
+
+const pool=currentWords.length>=4?currentWords:ALL_WORDS;
+
+const wrongs=shuffle(pool.filter(x=>x.ja!==w.ja)).slice(0,3).map(x=>x.ja);
+
+const opts=shuffle([w.ja,...wrongs]);
+
+const cont=document.getElementById('quiz-options');
+
+cont.innerHTML='';
+
+opts.forEach(o=>{
+
+const b=document.createElement('button');
+
+b.type='button';
+
+b.className='opt-btn py-4 rounded-xl border-2 border-gray-200 bg-white font-medium text-lg text-gray-700 shadow-sm';
+
+b.textContent=o;
+
+b.onclick=()=>pickAnswer(b,o,w.ja);
+
+cont.appendChild(b);
+
+});
+
+}
+
+
+
+function pickAnswer(btn,picked,correct){
+
+if(answered)return;answered=true;
+
+const total=quizWords.length;
+
+const btns=document.getElementById('quiz-options').children;
+
+
+if(picked===correct){
+
+score++;
+
+btn.classList.add('opt-correct');
+
+} else {
+
+btn.classList.add('opt-wrong');
+
+[...btns].find(b=>b.textContent===correct)?.classList.add('opt-correct');
+
+// 自動的に苦手に追加
+
+toggleBookmark(quizWords[quizIdx].en);
+
+renderCategories();
+
+}
+
+
+document.getElementById('quiz-score').textContent=`${score} 点`;
+
+setTimeout(()=>{
+
+if(quizIdx<total-1){quizIdx++;showQuestion();}
+
+else showResult();
+
+},800);
+
+}
+
+
+
+function showResult(){
+
+const total=quizWords.length;
+
+document.getElementById('quiz-active').classList.add('hidden');
+
+document.getElementById('quiz-result').classList.remove('hidden');
+
+document.getElementById('result-score').textContent=`${score} / ${total}`;
+
+
+// Save Stats
+
+stats.totalQuestions += total;
+
+stats.totalCorrect += score;
+
+if(score > stats.highScore) stats.highScore = score;
+
+localStorage.setItem(STORAGE_STATS, JSON.stringify(stats));
+
+
+
+// Render Stats
+
+document.getElementById('stat-high-score').textContent = `${stats.highScore} / ${total}`;
+
+const accuracy = Math.round((stats.totalCorrect / stats.totalQuestions) * 100) || 0;
+
+document.getElementById('stat-accuracy').textContent = `${accuracy}%`;
+
+
+
+const pct=score/total;
+
+const msgs=['もう少しがんばろう！💪','いい調子！🌟','すごい！💯','パーフェクト！🏆'];
+
+document.getElementById('result-msg').textContent=pct<=0.3?msgs[0]:pct<=0.6?msgs[1]:pct<1?msgs[2]:msgs[3];
+
+}
+
+
+
+renderCategories();
+
+showCard();
+
+lucide.createIcons();
+
+
+
+// Service Worker Registration
+
+if ('serviceWorker' in navigator) {
+
+window.addEventListener('load', () => {
+
+navigator.serviceWorker.register('sw.js')
+
+.then(reg => console.log('PWA Service Worker registered:', reg.scope))
+
+.catch(err => console.error('PWA Service Worker registration failed:', err));
+
+});
+
+}
+
+</script>
+
+</body>
+
+</html>
